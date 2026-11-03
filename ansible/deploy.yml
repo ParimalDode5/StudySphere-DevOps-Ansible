@@ -1,0 +1,91 @@
+---
+- name: Deploy the StudySphere online learning website
+  hosts: webservers
+  become: true
+  gather_facts: true
+
+  vars:
+    web_root: /var/www/studysphere
+    nginx_site_available: /etc/nginx/sites-available/studysphere
+    nginx_site_enabled: /etc/nginx/sites-enabled/studysphere
+
+  tasks:
+    - name: Update the APT package index
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install Nginx web server
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+
+    - name: Create the StudySphere web root
+      ansible.builtin.file:
+        path: "{{ web_root }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+
+    - name: Copy StudySphere website files to the web root
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../website/"
+        dest: "{{ web_root }}/"
+        owner: www-data
+        group: www-data
+        mode: '0644'
+        directory_mode: '0755'
+
+    - name: Configure the StudySphere Nginx virtual host
+      ansible.builtin.template:
+        src: templates/studysphere.conf.j2
+        dest: "{{ nginx_site_available }}"
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart Nginx
+
+    - name: Enable the StudySphere Nginx virtual host
+      ansible.builtin.file:
+        src: "{{ nginx_site_available }}"
+        dest: "{{ nginx_site_enabled }}"
+        state: link
+      notify: Restart Nginx
+
+    - name: Disable the default Nginx virtual host
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Restart Nginx
+
+    - name: Validate the Nginx configuration
+      ansible.builtin.command: nginx -t
+      changed_when: false
+
+    - name: Apply pending Nginx configuration changes
+      ansible.builtin.meta: flush_handlers
+
+    - name: Ensure Nginx is running and enabled at startup
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Verify that StudySphere responds with HTTP 200
+      ansible.builtin.uri:
+        url: http://127.0.0.1/
+        method: GET
+        status_code: 200
+        return_content: false
+      register: studysphere_http_check
+
+    - name: Display the deployment verification result
+      ansible.builtin.debug:
+        msg: "StudySphere is available. HTTP status: {{ studysphere_http_check.status }}"
+
+  handlers:
+    - name: Restart Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
