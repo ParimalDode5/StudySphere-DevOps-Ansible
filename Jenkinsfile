@@ -72,7 +72,7 @@ pipeline {
 
                     test -d "$DEPLOY_DIR"
 
-                    rsync -rltv --delete \
+                    rsync -rlv --delete \
                         --no-perms \
                         --no-owner \
                         --no-group \
