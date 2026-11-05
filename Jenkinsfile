@@ -72,7 +72,10 @@ pipeline {
 
                     test -d "$DEPLOY_DIR"
 
-                    rsync -av --delete \
+                    rsync -rltv --delete \
+                        --no-perms \
+                        --no-owner \
+                        --no-group \
                         build/site/ "$DEPLOY_DIR/"
 
                     HTTP_CODE=$(curl -s -o /tmp/studysphere-response.html \
