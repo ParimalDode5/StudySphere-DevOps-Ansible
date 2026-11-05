@@ -159,3 +159,16 @@ Save only screenshots from your own actual execution in `screenshots/`.
 ## Scope note
 
 This implementation deploys a static website to one local WSL2 Ubuntu host. It demonstrates configuration management and a local web-server deployment. It does not implement a production CI/CD pipeline, cloud infrastructure, user authentication, real course enrolment or a database.
+
+
+## Activity 3: Jenkins CI/CD and Terraform
+
+This project now includes an automated Jenkins CI/CD pipeline
+with Checkout, Build, Test and Deploy stages.
+
+Terraform provisions the Docker infrastructure required
+to run StudySphere using Nginx.
+
+Application deployment:
+- Jenkins and Nginx: http://localhost
+- Terraform and Docker: http://localhost:8082
